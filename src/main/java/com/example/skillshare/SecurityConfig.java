@@ -16,15 +16,20 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception{
-        http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(authorizeRequests ->
-                        authorizeRequests.anyRequest().authenticated())
-                //.formLogin(form -> form.defaultSuccessUrl("/hello",true))
+    SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults()) // enable CORS
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/user-info").permitAll() // public
+                        .anyRequest().authenticated() // everything else needs auth
+                )
                 .oauth2Login(oauth2 ->
-                        oauth2.defaultSuccessUrl("/hello",true));
-
+                        oauth2.defaultSuccessUrl("http://localhost:5173/profile", true)
+                );
 
         return http.build();
     }
+
+
 }
