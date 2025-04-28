@@ -1,4 +1,4 @@
-package com.example.skillshare;
+package com.example.skillshare.controller;
 
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

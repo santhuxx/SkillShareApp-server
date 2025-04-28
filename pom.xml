@@ -31,6 +31,17 @@
 	</properties>
 	<dependencies>
 		<dependency>
+			<groupId>com.google.firebase</groupId>
+			<artifactId>firebase-admin</artifactId>
+			<version>9.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.30</version> <!-- or latest version -->
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-oauth2-client</artifactId>
 		</dependency>
