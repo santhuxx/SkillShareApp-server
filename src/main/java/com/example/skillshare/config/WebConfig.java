@@ -1,4 +1,4 @@
-package com.example.skillshare;
+package com.example.skillshare.config;
 
 
 import org.springframework.context.annotation.Bean;

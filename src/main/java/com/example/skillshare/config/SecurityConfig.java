@@ -1,4 +1,4 @@
-package com.example.skillshare;
+package com.example.skillshare.config;
 
 
 import org.springframework.context.annotation.Bean;
@@ -25,7 +25,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated() // everything else needs auth
                 )
                 .oauth2Login(oauth2 ->
-                        oauth2.defaultSuccessUrl("http://localhost:5173/profile", true)
+                        oauth2.defaultSuccessUrl("http://localhost:5173/home", true)
                 );
 
         return http.build();
