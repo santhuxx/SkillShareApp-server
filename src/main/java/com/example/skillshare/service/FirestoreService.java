@@ -75,4 +75,16 @@ public class FirestoreService {
             return Optional.empty();
         }
     }
+
+    public List<Post> getAllPosts() throws ExecutionException, InterruptedException {
+        ApiFuture<QuerySnapshot> future = firestore.collection("posts").get();
+        QuerySnapshot querySnapshot = future.get();
+        List<Post> posts = new ArrayList<>();
+
+        for (QueryDocumentSnapshot document : querySnapshot.getDocuments()) {
+            posts.add(document.toObject(Post.class));
+        }
+
+        return posts;
+    }
 }
