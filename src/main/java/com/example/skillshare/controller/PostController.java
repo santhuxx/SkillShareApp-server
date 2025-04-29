@@ -64,4 +64,10 @@ public class PostController {
         List<Post> posts = postService.getUserPosts();
         return ResponseEntity.ok(posts);
     }
+
+    @GetMapping("/{postId}")
+    public ResponseEntity<Post> getPostById(@PathVariable String postId) throws ExecutionException, InterruptedException {
+        Post post = postService.getPostById(postId);
+        return ResponseEntity.ok(post);
+    }
 }
