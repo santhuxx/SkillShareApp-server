@@ -6,9 +6,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -65,8 +65,10 @@ public class PostService {
 
         // Handle new images if provided
         if (newImages != null && newImages.length > 0) {
+            // Delete old images
             post.getImageUrls().forEach(firebaseStorageService::deleteFile);
 
+            // Upload new images
             List<String> newImageUrls = new ArrayList<>();
             for (MultipartFile image : newImages) {
                 String imageUrl = firebaseStorageService.uploadFile(image, "posts/images");
@@ -77,7 +79,10 @@ public class PostService {
 
         // Handle new video if provided
         if (newVideo != null && !newVideo.isEmpty()) {
+            // Delete old video
             firebaseStorageService.deleteFile(post.getVideoUrl());
+
+            // Upload new video
             String videoUrl = firebaseStorageService.uploadFile(newVideo, "posts/videos");
             post.setVideoUrl(videoUrl);
         }
@@ -89,9 +94,11 @@ public class PostService {
         Post post = firestoreService.getPostById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
+        // Delete all media files
         post.getImageUrls().forEach(firebaseStorageService::deleteFile);
         firebaseStorageService.deleteFile(post.getVideoUrl());
 
+        // Delete post from Firestore
         firestoreService.deletePost(postId);
     }
 
@@ -106,5 +113,9 @@ public class PostService {
     public Post getPostById(String postId) throws ExecutionException, InterruptedException {
         return firestoreService.getPostById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found"));
+    }
+
+    public List<Post> getAllPosts() throws ExecutionException, InterruptedException {
+        return firestoreService.getAllPosts();
     }
 }

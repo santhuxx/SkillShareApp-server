@@ -2,6 +2,7 @@ package com.example.skillshare.controller;
 
 import com.example.skillshare.model.Post;
 import com.example.skillshare.service.PostService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -11,9 +12,13 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+
+@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/posts")
 public class PostController {
+
+    @Autowired
 
     private final PostService postService;
 
@@ -69,5 +74,11 @@ public class PostController {
     public ResponseEntity<Post> getPostById(@PathVariable String postId) throws ExecutionException, InterruptedException {
         Post post = postService.getPostById(postId);
         return ResponseEntity.ok(post);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<Post>> getAllPosts() throws ExecutionException, InterruptedException {
+        List<Post> posts = postService.getAllPosts();
+        return ResponseEntity.ok(posts);
     }
 }
