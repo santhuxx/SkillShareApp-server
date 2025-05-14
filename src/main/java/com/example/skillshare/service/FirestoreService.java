@@ -1,6 +1,7 @@
 package com.example.skillshare.service;
 
 import com.example.skillshare.model.ChatSession;
+import com.example.skillshare.model.LearningPlan;
 import com.example.skillshare.model.Message;
 import com.example.skillshare.model.Post;
 import com.google.api.core.ApiFuture;
@@ -234,4 +235,76 @@ public class FirestoreService {
 
 
     //--------sadee-------
+
+    public LearningPlan createLearningPlan(LearningPlan learningPlan) throws ExecutionException, InterruptedException {
+        String id = UUID.randomUUID().toString();
+        learningPlan.setId(id);
+        learningPlan.setCreatedAt(new Date());
+        learningPlan.setUpdatedAt(new Date());
+
+        ApiFuture<WriteResult> future = firestore.collection("learningPlans")
+                .document(id)
+                .set(learningPlan);
+
+        future.get();
+        return learningPlan;
+    }
+
+    public LearningPlan updateLearningPlan(String planId, LearningPlan learningPlan) throws ExecutionException, InterruptedException {
+        learningPlan.setUpdatedAt(new Date());
+
+        ApiFuture<WriteResult> future = firestore.collection("learningPlans")
+                .document(planId)
+                .set(learningPlan, SetOptions.merge());
+
+        future.get();
+        return learningPlan;
+    }
+
+    public void deleteLearningPlan(String planId) throws ExecutionException, InterruptedException {
+        ApiFuture<WriteResult> future = firestore.collection("learningPlans")
+                .document(planId)
+                .delete();
+
+        future.get();
+    }
+
+    public List<LearningPlan> getUserLearningPlans(String userId) throws ExecutionException, InterruptedException {
+        ApiFuture<QuerySnapshot> future = firestore.collection("learningPlans")
+                .whereEqualTo("userId", userId)
+                .get();
+
+        QuerySnapshot querySnapshot = future.get();
+        List<LearningPlan> plans = new ArrayList<>();
+
+        for (QueryDocumentSnapshot document : querySnapshot.getDocuments()) {
+            plans.add(document.toObject(LearningPlan.class));
+        }
+
+        return plans;
+    }
+
+    public Optional<LearningPlan> getLearningPlanById(String planId) throws ExecutionException, InterruptedException {
+        DocumentReference docRef = firestore.collection("learningPlans").document(planId);
+        ApiFuture<DocumentSnapshot> future = docRef.get();
+        DocumentSnapshot document = future.get();
+
+        if (document.exists()) {
+            return Optional.of(document.toObject(LearningPlan.class));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public List<LearningPlan> getAllLearningPlans() throws ExecutionException, InterruptedException {
+        ApiFuture<QuerySnapshot> future = firestore.collection("learningPlans").get();
+        QuerySnapshot querySnapshot = future.get();
+        List<LearningPlan> plans = new ArrayList<>();
+
+        for (QueryDocumentSnapshot document : querySnapshot.getDocuments()) {
+            plans.add(document.toObject(LearningPlan.class));
+        }
+
+        return plans;
+    }
 }
