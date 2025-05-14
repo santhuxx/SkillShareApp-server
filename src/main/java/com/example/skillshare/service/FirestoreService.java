@@ -152,17 +152,14 @@ public class FirestoreService {
     }
 
     public Optional<ChatSession> getChatSessionBetweenUsers(String user1Id, String user2Id) throws ExecutionException, InterruptedException {
-        // Query for session where user1 is user1 and user2 is user2
         Query query1 = firestore.collection("chat_sessions")
                 .whereEqualTo("user1Id", user1Id)
                 .whereEqualTo("user2Id", user2Id);
 
-        // Query for session where user1 is user2 and user2 is user1
         Query query2 = firestore.collection("chat_sessions")
                 .whereEqualTo("user1Id", user2Id)
                 .whereEqualTo("user2Id", user1Id);
 
-        // Execute first query
         ApiFuture<QuerySnapshot> future1 = query1.get();
         QuerySnapshot snapshot1 = future1.get();
 
@@ -170,7 +167,6 @@ public class FirestoreService {
             return Optional.of(snapshot1.getDocuments().get(0).toObject(ChatSession.class));
         }
 
-        // Execute second query
         ApiFuture<QuerySnapshot> future2 = query2.get();
         QuerySnapshot snapshot2 = future2.get();
 
@@ -182,31 +178,27 @@ public class FirestoreService {
     }
 
     public List<ChatSession> getChatSessionsForUser(String userId) throws ExecutionException, InterruptedException {
-        // Query for sessions where user is user1
         Query query1 = firestore.collection("chat_sessions")
                 .whereEqualTo("user1Id", userId);
 
-        // Query for sessions where user is user2
         Query query2 = firestore.collection("chat_sessions")
                 .whereEqualTo("user2Id", userId);
 
-        // Execute both queries
         ApiFuture<QuerySnapshot> future1 = query1.get();
         ApiFuture<QuerySnapshot> future2 = query2.get();
 
         List<ChatSession> sessions = new ArrayList<>();
 
-        // Process first query results
-        for (DocumentSnapshot document : future1.get().getDocuments()) {
+        QuerySnapshot snapshot1 = future1.get();
+        for (DocumentSnapshot document : snapshot1.getDocuments()) {
             sessions.add(document.toObject(ChatSession.class));
         }
 
-        // Process second query results
-        for (DocumentSnapshot document : future2.get().getDocuments()) {
+        QuerySnapshot snapshot2 = future2.get();
+        for (DocumentSnapshot document : snapshot2.getDocuments()) {
             sessions.add(document.toObject(ChatSession.class));
         }
 
-        // Sort sessions by lastUpdated
         sessions.sort((s1, s2) -> s2.getLastUpdated().compareTo(s1.getLastUpdated()));
 
         return sessions;
@@ -214,12 +206,10 @@ public class FirestoreService {
 
     public void updateChatSession(ChatSession session) throws ExecutionException, InterruptedException {
         if (session.getId() == null) {
-            // Create new session
             DocumentReference docRef = firestore.collection("chat_sessions").document();
             session.setId(docRef.getId());
             docRef.set(session).get();
         } else {
-            // Update existing session
             firestore.collection("chat_sessions").document(session.getId()).set(session).get();
         }
     }
@@ -227,8 +217,8 @@ public class FirestoreService {
     public Message updateMessage(String messageId, Message message) throws ExecutionException, InterruptedException {
         DocumentReference docRef = firestore.collection("messages").document(messageId);
         ApiFuture<WriteResult> result = docRef.set(message);
-        result.get(); // Wait for the operation to complete
-        return message; // Return the updated message
+        result.get();
+        return message;
     }
 
 
