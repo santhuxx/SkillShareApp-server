@@ -14,4 +14,6 @@ public class Post {
     private String videoUrl;
     private Date createdAt;
     private Date updatedAt;
+    private int likesCount=0;
+    private int commentsCount=0;
 }
