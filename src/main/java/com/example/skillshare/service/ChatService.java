@@ -1,4 +1,3 @@
-// ChatService.java
 package com.example.skillshare.service;
 
 import com.example.skillshare.model.ChatSession;
@@ -8,8 +7,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -21,13 +23,11 @@ public class ChatService {
         this.firestoreService = firestoreService;
     }
 
-    public Message sendMessage(String receiverId, String content) throws ExecutionException, InterruptedException {
-        // Get current user
+    public Map<String, Object> sendMessage(String receiverId, String content) throws ExecutionException, InterruptedException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String senderId = oAuth2User.getName();
 
-        // Create message
         Message message = new Message();
         message.setSenderId(senderId);
         message.setReceiverId(receiverId);
@@ -35,10 +35,8 @@ public class ChatService {
         message.setTimestamp(new Date());
         message.setRead(false);
 
-        // Save message
         Message savedMessage = firestoreService.createMessage(message);
 
-        // Get or create chat session
         ChatSession session = firestoreService.getChatSessionBetweenUsers(senderId, receiverId)
                 .orElseGet(() -> {
                     ChatSession newSession = new ChatSession();
@@ -48,88 +46,135 @@ public class ChatService {
                     return newSession;
                 });
 
-        // Update session
         session.setLastUpdated(new Date());
         firestoreService.updateChatSession(session);
 
-        return savedMessage;
+        // Return a Map with message fields and usernames
+        Map<String, Object> messageMap = new HashMap<>();
+        messageMap.put("id", savedMessage.getId());
+        messageMap.put("senderId", savedMessage.getSenderId());
+        messageMap.put("receiverId", savedMessage.getReceiverId());
+        messageMap.put("content", savedMessage.getContent());
+        messageMap.put("timestamp", savedMessage.getTimestamp());
+        messageMap.put("read", savedMessage.isRead());
+        messageMap.put("deleted", savedMessage.isDeleted());
+        messageMap.put("updatedAt", savedMessage.getUpdatedAt());
+        messageMap.put("senderUsername", firestoreService.getUsernameByUserId(senderId));
+        messageMap.put("receiverUsername", firestoreService.getUsernameByUserId(receiverId));
+
+        return messageMap;
     }
 
-    public List<Message> getMessagesWithUser(String otherUserId) throws ExecutionException, InterruptedException {
-        // Get current user
+    public List<Map<String, Object>> getMessagesWithUser(String otherUserId) throws ExecutionException, InterruptedException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String currentUserId = oAuth2User.getName();
 
-        return firestoreService.getMessagesBetweenUsers(currentUserId, otherUserId);
+        List<Message> messages = firestoreService.getMessagesBetweenUsers(currentUserId, otherUserId);
+        List<Map<String, Object>> messagesWithUsernames = new ArrayList<>();
+
+        for (Message message : messages) {
+            Map<String, Object> messageMap = new HashMap<>();
+            messageMap.put("id", message.getId());
+            messageMap.put("senderId", message.getSenderId());
+            messageMap.put("receiverId", message.getReceiverId());
+            messageMap.put("content", message.getContent());
+            messageMap.put("timestamp", message.getTimestamp());
+            messageMap.put("read", message.isRead());
+            messageMap.put("deleted", message.isDeleted());
+            messageMap.put("updatedAt", message.getUpdatedAt());
+            messageMap.put("senderUsername", firestoreService.getUsernameByUserId(message.getSenderId()));
+            messageMap.put("receiverUsername", firestoreService.getUsernameByUserId(message.getReceiverId()));
+            messagesWithUsernames.add(messageMap);
+        }
+
+        return messagesWithUsernames;
     }
 
-    public List<ChatSession> getChatSessions() throws ExecutionException, InterruptedException {
-        // Get current user
+    public List<Map<String, Object>> getChatSessions() throws ExecutionException, InterruptedException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String currentUserId = oAuth2User.getName();
 
-        return firestoreService.getChatSessionsForUser(currentUserId);
+        List<ChatSession> sessions = firestoreService.getChatSessionsForUser(currentUserId);
+        List<Map<String, Object>> sessionsWithUsernames = new ArrayList<>();
+
+        for (ChatSession session : sessions) {
+            Map<String, Object> sessionMap = new HashMap<>();
+            sessionMap.put("id", session.getId());
+            sessionMap.put("user1Id", session.getUser1Id());
+            sessionMap.put("user2Id", session.getUser2Id());
+            sessionMap.put("lastUpdated", session.getLastUpdated());
+            String otherUserId = session.getUser1Id().equals(currentUserId) ? session.getUser2Id() : session.getUser1Id();
+            sessionMap.put("otherUserId", otherUserId);
+            sessionMap.put("otherUsername", firestoreService.getUsernameByUserId(otherUserId));
+            sessionsWithUsernames.add(sessionMap);
+        }
+
+        return sessionsWithUsernames;
     }
 
     public void markMessageAsRead(String messageId) throws ExecutionException, InterruptedException {
         Message message = firestoreService.getMessageById(messageId)
                 .orElseThrow(() -> new RuntimeException("Message not found"));
 
-        // Get current user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String currentUserId = oAuth2User.getName();
 
-        // Only mark as read if current user is the receiver
         if (message.getReceiverId().equals(currentUserId)) {
             message.setRead(true);
             firestoreService.updateMessage(messageId, message);
         }
     }
 
-    public Message updateMessage(String messageId, String newContent)
+    public Map<String, Object> updateMessage(String messageId, String newContent)
             throws ExecutionException, InterruptedException {
 
-        // Get current user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String currentUserId = oAuth2User.getName();
 
-        // Get message
         Message message = firestoreService.getMessageById(messageId)
                 .orElseThrow(() -> new RuntimeException("Message not found"));
 
-        // Check if current user is the sender
         if (!message.getSenderId().equals(currentUserId)) {
             throw new RuntimeException("You can only update your own messages");
         }
 
-        // Update message
         message.setContent(newContent);
         message.setUpdatedAt(new Date());
 
-        // Return the updated message
-        return firestoreService.updateMessage(messageId, message);
+        Message updatedMessage = firestoreService.updateMessage(messageId, message);
+
+        // Return a Map with updated message fields and usernames
+        Map<String, Object> messageMap = new HashMap<>();
+        messageMap.put("id", updatedMessage.getId());
+        messageMap.put("senderId", updatedMessage.getSenderId());
+        messageMap.put("receiverId", updatedMessage.getReceiverId());
+        messageMap.put("content", updatedMessage.getContent());
+        messageMap.put("timestamp", updatedMessage.getTimestamp());
+        messageMap.put("read", updatedMessage.isRead());
+        messageMap.put("deleted", updatedMessage.isDeleted());
+        messageMap.put("updatedAt", updatedMessage.getUpdatedAt());
+        messageMap.put("senderUsername", firestoreService.getUsernameByUserId(updatedMessage.getSenderId()));
+        messageMap.put("receiverUsername", firestoreService.getUsernameByUserId(updatedMessage.getReceiverId()));
+
+        return messageMap;
     }
 
     public void deleteMessage(String messageId) throws ExecutionException, InterruptedException {
-        // Get current user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String currentUserId = oAuth2User.getName();
 
-        // Get message
         Message message = firestoreService.getMessageById(messageId)
                 .orElseThrow(() -> new RuntimeException("Message not found"));
 
-        // Check if current user is the sender
         if (!message.getSenderId().equals(currentUserId)) {
             throw new RuntimeException("You can only delete your own messages");
         }
 
-        // Soft delete the message
         message.setDeleted(true);
         message.setUpdatedAt(new Date());
 

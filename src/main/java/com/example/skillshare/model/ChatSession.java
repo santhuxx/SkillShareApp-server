@@ -2,6 +2,8 @@
 package com.example.skillshare.model;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Date;
 import java.util.List;
@@ -11,6 +13,11 @@ public class ChatSession {
     private String id;
     private String user1Id;
     private String user2Id;
-    private List<String> messageIds;
     private Date lastUpdated;
+    // Getters and setters
+    @Setter
+    @Getter
+    private String lastMessage;
+
+    // ... other getters/setters
 }
