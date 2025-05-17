@@ -1,6 +1,7 @@
 package com.example.skillshare.service;
 
 import com.example.skillshare.model.Comment;
+import com.example.skillshare.model.Notification;
 import com.example.skillshare.model.Post;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,6 +26,7 @@ public class CommentService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String userId = oAuth2User.getName();
+        String username = oAuth2User.getAttribute("name");
 
         // Create comment
         Comment comment = new Comment();
@@ -39,6 +41,20 @@ public class CommentService {
                 .orElseThrow(() -> new RuntimeException("Post not found"));
         post.setCommentCount(post.getCommentCount() + 1);
         firestoreService.updatePost(postId, post);
+
+        // Create notification for post owner (if not the commenter)
+        if (!post.getUserId().equals(userId)) {
+            Notification notification = new Notification();
+            notification.setUserId(post.getUserId());
+            notification.setType("comment");
+            notification.setPostId(postId);
+            notification.setActorId(userId);
+            notification.setActorUsername(username);
+            notification.setContent(username + " commented on your post");
+            notification.setCreatedAt(new Date());
+            notification.setRead(false); // Changed from setIsRead to setRead
+            firestoreService.createNotification(notification);
+        }
 
         return firestoreService.createComment(comment);
     }
