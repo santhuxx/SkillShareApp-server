@@ -19,5 +19,4 @@ public class ChatSession {
     @Getter
     private String lastMessage;
 
-    // ... other getters/setters
 }

@@ -15,13 +15,14 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults()) // enable CORS
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/user-info", "/api/posts/all", "/api/posts").permitAll() // 👈 allow public access
+                        .requestMatchers("/user-info", "/api/posts/all", "/api/posts", "/api/messages/**","/api/chats/**").permitAll() // 👈 allow public access
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 ->
