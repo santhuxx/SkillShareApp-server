@@ -12,14 +12,12 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/posts")
 public class PostController {
 
     @Autowired
-
     private final PostService postService;
 
     public PostController(PostService postService) {
@@ -48,13 +46,14 @@ public class PostController {
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) MultipartFile[] images,
-            @RequestParam(required = false) MultipartFile video) throws IOException, ExecutionException, InterruptedException {
+            @RequestParam(required = false) MultipartFile video,
+            @RequestParam(required = false) String currentImageUrls) throws IOException, ExecutionException, InterruptedException {
 
         if (images != null && images.length > 3) {
             throw new IllegalArgumentException("Maximum 3 images allowed");
         }
 
-        Post updatedPost = postService.updatePost(postId, title, description, images, video);
+        Post updatedPost = postService.updatePost(postId, title, description, images, video, currentImageUrls);
         return ResponseEntity.ok(updatedPost);
     }
 
@@ -82,3 +81,4 @@ public class PostController {
         return ResponseEntity.ok(posts);
     }
 }
+

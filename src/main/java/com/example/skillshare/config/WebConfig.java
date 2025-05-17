@@ -40,3 +40,5 @@ public class WebConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }}
+
+

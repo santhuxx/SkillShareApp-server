@@ -31,3 +31,4 @@ public class FirestoreInitializer implements CommandLineRunner {
         }
     }
 }
+

@@ -46,6 +46,7 @@ public class FirebaseStorageService {
         }
     }
 
+
     private String extractFilePathFromUrl(String fileUrl) {
         // Example of fileUrl:
         // https://firebasestorage.googleapis.com/v0/b/[bucket-name]/o/[folder%2FfileName]?alt=media
